@@ -1,0 +1,196 @@
+//@version=6
+indicator("Mr.$1 Forex Signal Tool (Educational Premium)", overlay=true)
+
+// --- Script Settings ---
+var string watermark = "Mr. $1 Forex Trading | Educational Breakdown – NOT Financial Advice"
+
+// --- Telegram Settings ---
+var string telegram_token = input.string("", title="Telegram Bot Token", group="Telegram")
+var string telegram_chat_id = input.string("", title="Telegram Chat ID", group="Telegram")
+
+// --- Auto-Populated Fields ---
+var string symbol = str.upper(syminfo.ticker)
+var string time_str = str.format("{0} | {1} {2} {3}, {4}", 
+    str.tostring(hour(time), "00") + ":" + str.tostring(minute(time), "00") + ":" + str.tostring(second(time), "00") + (hour(time) >= 12 ? " PM" : " AM"), 
+    str.tostring(weekday(time)), 
+    str.tostring(month(time)), 
+    str.tostring(dayofmonth(time)), 
+    str.tostring(year(time)))
+
+// --- User Inputs ---
+var string order_type = input.string("Buy Limit", title="Order Type", options=["Buy Limit", "Sell Limit", "Buy Market", "Sell Market"])
+var float position_size = input.float(0.01, title="Position Size", minval=0.01, step=0.01)
+var float pip_value = input.float(0.063, title="Pip Value (USD)", step=0.001, minval=0.001)
+var bool send_signal = input.bool(false, title="🚀 Send Trade Idea")
+var bool clear_signal = input.bool(false, title="🗑️ Clear")
+
+// --- Chart-Based Price Inputs ---
+var float entry1 = input.price(0.0, title="💡 Entry 1", confirm=true)
+var float entry2 = input.price(0.0, title="💡 Entry 2", confirm=true)
+var float entry3 = input.price(0.0, title="💡 Entry 3", confirm=true)
+var float entry4 = input.price(0.0, title="💡 Entry 4", confirm=true)
+var float entry5 = input.price(0.0, title="💡 Entry 5", confirm=true)
+var float sl = input.price(0.0, title="❌ Stop Loss", confirm=true)
+var float tp1 = input.price(0.0, title="✅ TP 1", confirm=true)
+var float tp2 = input.price(0.0, title="✅ TP 2", confirm=true)
+var float tp3 = input.price(0.0, title="✅ TP 3", confirm=true)
+var float tp4 = input.price(0.0, title="✅ TP 4", confirm=true)
+
+// --- Calculations ---
+var float avg_entry = (entry1 + entry2 + entry3 + entry4 + entry5) / 5
+var float sl_pips = avg_entry > 0 and sl > 0 ? math.abs(avg_entry - sl) * 10000 : 0.0
+var float tp_pips = avg_entry > 0 and tp4 > 0 ? math.abs(tp4 - avg_entry) * 10000 : 0.0
+var float risk_reward = sl_pips > 0 ? tp_pips / sl_pips : 0.0
+
+// --- Validation ---
+var bool valid_inputs = entry1 > 0 and entry2 > 0 and entry3 > 0 and entry4 > 0 and entry5 > 0 and sl > 0 and tp1 > 0 and tp2 > 0 and tp3 > 0 and tp4 > 0
+var bool valid_sell = order_type == "Sell Limit" or order_type == "Sell Market" ? sl > avg_entry and tp1 < avg_entry : true
+var bool valid_buy = order_type == "Buy Limit" or order_type == "Buy Market" ? sl < avg_entry and tp1 > avg_entry : true
+var bool all_valid = valid_inputs and valid_sell and valid_buy
+if not all_valid
+    label.new(bar_index, high, text="Invalid! Check Entries/SL/TPs", color=color.red, style=label.style_label_down)
+
+// --- Signal Message (Educational Format) ---
+var string signal_message = all_valid ? 
+    watermark + "\n\n" +
+    "Let’s explore a hypothetical intraday setup on 💡" + symbol + "💡, based on current market structure and price action as of " + time_str + ".\n\n" +
+    "Some traders studying this chart might observe potential " + (order_type == "Buy Limit" or order_type == "Buy Market" ? "buying" : "selling") + " interest in the following zone:\n" +
+    " • Potential Entry Zones:\n" +
+    "💡" + str.tostring(entry1, "#.#####") + "💡" + str.tostring(entry2, "#.#####") + "💡" + str.tostring(entry3, "#.#####") + "💡" + str.tostring(entry4, "#.#####") + "💡" + str.tostring(entry5, "#.#####") + "\n" +
+    " • Hypothetical Stop Area:\n" +
+    "❌" + str.tostring(sl, "#.#####") + "\n" +
+    " • Potential Target Zones:\n" +
+    "✅" + str.tostring(tp1, "#.#####") + "✅" + str.tostring(tp2, "#.#####") + "✅" + str.tostring(tp3, "#.#####") + "✅" + str.tostring(tp4, "#.#####") + "\n\n" +
+    "This kind of setup could illustrate a risk-reward ratio of approximately 1:" + str.tostring(risk_reward, "#.##") + " assuming an overall exposure of " + str.tostring(sl_pips, "#.#") + " pips in exchange for a projected move of up to " + str.tostring(tp_pips, "#.#") + " pips.\n\n" +
+    "This breakdown is shared for educational purposes only, to show how technical zones and layered take-profits can be mapped out in a structured trading strategy. This is not a recommendation to take any position.\n\n" +
+    "Key Learning Note:\n" +
+    "Always apply strict risk management. Trading should never be done with money you cannot afford to lose, and setups like this should always be validated with your own research.\n\n" +
+    "⸻\n" +
+    "Disclaimer:\n" +
+    "Mr. $1 Forex Trading is not a licensed financial advisor. This content is for informational and educational purposes only. No trade signals, investment advice, or financial recommendations are being offered. Always consult with a registered financial advisor before making trading decisions."
+    : "Invalid Signal - Fill All Fields Correctly"
+
+// --- Floating Table ---
+var table gui_table = table.new(position.top_right, 2, 16, bgcolor=color.rgb(20, 20, 25, 90), border_width=1, border_color=color.rgb(0, 255, 255))
+if barstate.islastconfirmedhistory
+    table.cell(gui_table, 0, 0, "🌐 Symbol", text_color=color.white, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 1, 0, symbol, text_color=color.yellow, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 0, 1, "⏰ Time", text_color=color.white, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 1, 1, time_str, text_color=color.yellow, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 0, 2, "⚖️ Type", text_color=color.white, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 1, 2, order_type, text_color=color.yellow, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 0, 3, "💡 E1", text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 3, str.tostring(entry1, "#.##### _
+
+), text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 4, "💡 E2", text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 4, str.tostring(entry2, "#.#####"), text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 5, "💡 E3", text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 5, str.tostring(entry3, "#.#####"), text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 6, "💡 E4", text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 6, str.tostring(entry4, "#.#####"), text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 7, "💡 E5", text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 7, str.tostring(entry5, "#.#####"), text_color=color.green, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 8, "❌ SL", text_color=color.red, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 8, str.tostring(sl, "#.#####"), text_color=color.red, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 9, "✅ TP1", text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 9, str.tostring(tp1, "#.#####"), text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 10, "✅ TP2", text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 10, str.tostring(tp2, "#.#####"), text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 11, "✅ TP3", text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 11, str.tostring(tp3, "#.#####"), text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 12, "✅ TP4", text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 1, 12, str.tostring(tp4, "#.#####"), text_color=color.blue, bgcolor=all_valid ? color.rgb(40, 40, 45) : color.rgb(100, 0, 0))
+    table.cell(gui_table, 0, 13, "📏 R:R", text_color=color.white, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 1, 13, "1:" + str.tostring(risk_reward, "#.##"), text_color=color.yellow, bgcolor=color.rgb(40, 40, 45))
+    table.cell(gui_table, 0, 14, "🚀.Concurrent Send", text_color=color.white, bgcolor=send_signal ? color.rgb(0, 255, 0) : color.rgb(0, 200, 0))
+    table.cell(gui_table, 1, 14, "", bgcolor=send_signal david? color.rgb(0, 255, 0) : color.rgb(0, 200, 0))
+    table.cell(gui_table, 0, 15, "🗑️ Clear", text_color=color.white, bgcolor=clear_signal ? color.rgb(255, 0, 0) : color.rgb(200, 0, 0))
+    table.cell(gui_table, 1, 15, "", bgcolor=clear_signal ? color.rgb(255, 0, 0) : color.rgb(200, 0, 0))
+
+// --- Horizontal Rays ---
+hline(entry1 > 0 ? entry1 : na, title="Entry 1", color=color.green, linestyle=hline.style_dashed)
+hline(entry2 > 0 ? entry2 : na, title="Entry 2", color=color.green, linestyle=hline.style_dashed)
+hline(entry3 > 0 ? entry3 : na, title="Entry 3", color=color.green, linestyle=hline.style_dashed)
+hline(entry4 > 0 ? entry4 : na, title="Entry 4", color=color.green, linestyle=hline.style_dashed)
+hline(entry5 > 0 ? entry5 : na, title="Entry 5", color=color.green, linestyle=hline.style_dashed)
+hline(sl > 0 ? sl : na, title="Stop Loss", color=color.red, linestyle=hline.style_dashed)
+hline(tp1 > 0 ? tp1 : na, title="Take Profit 1", color=color.blue, linestyle=hline.style_dashed)
+hline(tp2 > 0 ? tp2 : na, title="Take Profit 2", color=color.blue, linestyle=hline.style_dashed)
+hline(tp3 > 0 ? tp3 : na, title="Take Profit 3", color=color.blue, linestyle=hline.style_dashed)
+hline(tp4 > 0 ? tp4 : na, title="Take Profit 4", color=color.blue, linestyle=hline.style_dashed)
+
+// --- Telegram Integration ---
+var bool last_signal_state = false
+if send_signal and not last_signal_state and all_valid
+    var string snapshot_url = chart.snapshot()
+    var string message_with_snapshot = signal_message + "\n\nChart Snapshot: " + snapshot_url
+    alert(message=message_with_snapshot, freq=alert.freq_once)
+    last_signal_state := true
+else if not send_signal
+    last_signal_state := false
+
+// --- Clear Logic ---
+if clear_signal
+    entry1 := 0.0
+    entry2 := 0.0
+    entry3 := 0.0
+    entry4 := 0.0
+    entry5 := 0.0
+    sl := 0.0
+    tp1 := 0.0
+    tp2 := 0.0
+    tp3 := 0.0
+    tp4 := 0.0
+
+// --- Follow-Up Logic ---
+var bool sent_halfway = false
+var bool sent_tp1 = false
+var bool sent_tp2 = false
+var bool sent_tp3 = false
+var bool sent_tp4 = false
+var float halfway_e1 = order_type == "Sell Limit" or order_type == "Sell Market" ? entry1 - (entry1 - tp4) / 2 : entry1 + (tp4 - entry1) / 2
+var string update_prefix = "[EDUCATIONAL MARKET OBSERVATION – " + symbol + "]\n\n"
+
+if all_valid and send_signal and not sent_halfway and ((order_type == "Sell Limit" or order_type == "Sell Market") ? close <= halfway_e1 : close >= halfway_e1)
+    var string halfway_message = update_prefix +
+        "🟢 " + symbol + " – Moving Deep Into The Profit Zone🔥🔥🔥\n" +
+        "This trade idea has reached 50% profit on Entry 1 based on the structure shared earlier.\n\n" +
+        "At this point in the market, some traders may consider the following approaches in similar situations:\n" +
+        "• Locking in partial gains (commonly known as “locking profits”)\n" +
+        "• Closing part or all of their position to manage risk\n" +
+        "• Holding the trade based on their strategy and personal plan\n\n" +
+        "Reminder:\n" +
+        "This is a market behavior example shared for educational purposes only. We are not financial advisors and this is not trading advice. Each trader is responsible for managing their own decisions, risk, and capital.\n\n" +
+        "Mr. One Dollar Forex Trading\n" +
+        "Where we trade ideas to educate, not dictate."
+    alert(halfway_message, freq=alert.freq_once)
+    sent_halfway := true
+
+if all_valid and send_signal and not sent_tp1 and ((order_type == "Sell Limit" or order_type == "Sell Market") ? close <= tp1 : close >= tp1)
+    var string tp1_message = update_prefix +
+        "🟢 " + symbol + " – Take Profit 1 Hit✅✅\n" +
+        "This trade idea has reached Take Profit 1 based on the structure shared earlier."
+    alert(tp1_message, freq=alert.freq_once)
+    sent_tp1 := true
+
+if all_valid and send_signal and not sent_tp2 and ((order_type == "Sell Limit" or order_type == "Sell Market") ? close <= tp2 : close >= tp2)
+    var string tp2_message = update_prefix +
+        "🟢 " + symbol + " – Take Profit 2 Hit✅✅\n" +
+        "This trade idea has reached Take Profit 2 based on the structure shared earlier."
+    alert(tp2_message, freq=alert.freq_once)
+    sent_tp2 := true
+
+if all_valid and send_signal and not sent_tp3 and ((order_type == "Sell Limit" or order_type == "Sell Market") ? close <= tp3 : close >= tp3)
+    var string tp3_message = update_prefix +
+        "🟢 " + symbol + " – Take Profit 3 Hit✅✅\n" +
+        "This trade idea has reached Take Profit 3 based on the structure shared earlier."
+    alert(tp3_message, freq=alert.freq_once)
+    sent_tp3 := true
+
+if all_valid and send_signal and not sent_tp4 and ((order_type == "Sell Limit" or order_type == "Sell Market") ? close <= tp4 : close >= tp4)
+    var string tp4_message = update_prefix +
+        "🟢 " + symbol + " – Take Profit 4 Hit✅✅\n" +
+        "This trade idea has reached Take Profit 4 based on the structure shared earlier."
+    alert(tp4_message, freq=alert.freq_once)
+    sent_tp4 := true

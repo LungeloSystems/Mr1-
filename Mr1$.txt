@@ -1,0 +1,69 @@
+sorry every signal has 5 entries, updated template:
+Mr.$1 Forex Trading
+Stay Blue & Take Profits
+
+2025-03-13 15:21:00
+
+⚖️ Update: 📉Market Execution Sell 📉
+
+Account Currency: USD
+Currency Pair: EURAUD
+Position Size: 0.01
+Amount to Risk: 93pips
+
+Order Type: 📉Sell Limit 📉
+
+Status: High Probability Trade
+⭐⭐⭐⭐
+
+Type: Intraday
+💡Entry Price-1: 1.72896
+💡Entry Price-2: 1.72999
+💡Entry Price-3: 1.73146
+💡Entry Price-4: 1.73294
+💡Entry Price-5: 1.73441
+
+❌Stop Loss at: 1.74371
+(93pips)
+
+✅Take Profit-1: 1.71930
+✅Take Profit-2: 1.71484
+✅Take Profit-3: 1.70877
+✅Maximum Take Profit at: 1.70237
+(266pips )
+
+Risk Reward Ratio: 1 : 2.86
+🔴Amount Risk: -$5.83
+🟢Amount Gain: +$16.69
+Pip Value: 0.063USD
+
+⛔Note: Use proper risk management rules, market may go against you.
+
+⭕Hint: Do not trade with funds you cannot afford to lose.
+
+💡Always check the risk amount before placing a trade.
+
+♨️Risk amount is based on entry level one .
+
+🅜🅡 1$ 🅕🅞🅡🅔🅧 🅣🅡🅐🅓🅘🅝🅖 is not a financial advisor. Trading financial instruments carries a high level of risk, and you could lose all of your invested funds. It may not be suitable for all investors.
+
+
+
+Okay i understand, i don't want the user to be the one populating the fieds on the indicator, the tool should auto populate the currency pair we're doing a signal for, which is gonna be a currency pair that's currently on the chart. time should be 100% accurate, RR must be well and accurately calculated
+
+
+or if you dont have any other smarter way to populate the fields for signal prices, since the tool is placing lines on the chart, that represent entries,Tps, Sl . user must click the entry field on the indicator and place the line on the chart where entry price is at on the chart, and other same thing for other fileds 4Tps, 1Sl, 4 or 5entries, then other fields should auto populate eg. date and time, Symbol and R:R in real time as user moves  lines, those lines can be horizontal ray tool on tradingview. I want the floating table to be the one used to fill in values, not the GUI that pops up when i double click the floating table. make floating table to be interactive, the currency pair filed should be named "Symbol" and make its field an auto cap(capital leters only). 
+
+make the fields to have logos on the floating table
+
+so here's how i want it to happen:
+
+user adds indicator on EURAUD M15 chart, then floating table shows up with Symbol field auto filled up as EURAUD, order type can be chosen by user, on entry prices user will click "Entry 1" fields then a horizontal ray with custom settings should be selected automatically then user drags it to where entry1 is based on the user's analysis, as user moves the horizontal ray tool the price on Entry1 field should update on rela time until the user drops the tool where Entry1 is at on the User analysis, then it updates the on the floating table field automatically after user deselect the horizontal ray tool. And same for other entry fields, TPs and SLs and everything should be editable. for screenshot the system/tool must download image on tradingview and accompany it with the signal on Telegram as one message
+
+make the floating table look clean, simplified and make it update time on real time, no mistakes, calculate evrything accuratley
+
+add buttons on the floating table eg. "Send Trade Idea💡" and "Clear" buttons. water mark should only be editable on the script.
+
+user must have as less work as possible to send trade ideas and trade updates on telegram
+
+enhance the floating table UI/UX to look 2025 and High tech, colurful, animated
